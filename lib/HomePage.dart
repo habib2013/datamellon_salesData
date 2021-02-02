@@ -54,73 +54,139 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: data == null ? CircularProgressIndicator() : createChart()
+      home: data == null ? Center(child: CircularProgressIndicator()) : createChart()
 
     );
   }
 
   charts.Series<Marketing, String> createSeries(String id, int i) {
-
+    var salesData =  double.parse(data[i]['Sales']).toInt();
     return charts.Series<Marketing, String>(
       id: id,
       domainFn: (Marketing marketing, _) => data[i]['State'],
-      measureFn: (Marketing marketing, _) => int.parse(data[i]['Quantity']),
+      measureFn: (Marketing marketing, _) => salesData,
       fillPatternFn: (_, __) => charts.FillPatternType.solid,
       fillColorFn: (Marketing marketing, _) =>
           charts.ColorUtil.fromDartColor(Color(0xffff9900)),
       // Marketing(this.product_name, this.sales, this.quantity,this.discount,this.profit);
       data: [
-
            Marketing(data[i]['Product Name'], data[i]['Sales'], data[i]['Quantity'], data[i]['Discount'], data[i]['Profit'])
-
       ],
     );
   }
 
+ charts.Series<Marketing, int> createLine(String id, int i) {
+  var salesData =  double.parse(data[i]['Sales']).toInt();
+    // var getSales = int.parse(data[i]['Sales'].subString(2));
+   return charts.Series<Marketing, int>(
+     id: data[i]['Product Name'],
+
+     colorFn: (__, _) => salesData > 30 ?charts.ColorUtil.fromDartColor(Color(0xff990099)) : charts.ColorUtil.fromDartColor(Color(0xffff9900)),
+     domainFn: (Marketing marketing, _) => int.parse(data[i]['Quantity']),
+     measureFn: (Marketing marketing, _) => salesData,
+     // Marketing(this.product_name, this.sales, this.quantity,this.discount,this.profit);
+     data: [
+       Marketing(data[i]['Product Name'], data[i]['Sales'], data[i]['Quantity'], data[i]['Discount'], data[i]['Profit'])
+
+     ],
+   );
+ }
+
+ charts.Series<Marketing, int> createPie(String id, int i) {
+   var salesData =  double.parse(data[i]['Sales']).toInt();
+   return charts.Series<Marketing, int>(
+     id: data[i]['Product Name'],
+     colorFn: (__, _) => charts.ColorUtil.fromDartColor(Color(0xff990099)),
+     domainFn: (Marketing marketing, _) => int.parse(data[i]['Quantity']),
+     measureFn: (Marketing marketing, _) => salesData / 100,
+     // Marketing(this.product_name, this.sales, this.quantity,this.discount,this.profit);
+     labelAccessorFn: (Marketing marketing, _) => data[i]['Product Name'],
+     data: [
+       Marketing(data[i]['Product Name'], data[i]['Sales'], data[i]['Quantity'], data[i]['Discount'], data[i]['Profit'],pieColor: Colors.red)
+     ],
+   );
+ }
+
   Widget createChart() {
+
     List<charts.Series<Marketing, String>> seriesList = [];
+    List<charts.Series<Marketing, int>> lineList = [];
+    List<charts.Series<Marketing, int>> pieList = [];
+
     for (int i = 0; i < 100; i++) {
       String id = 'WZG${i + 1}';
       seriesList.add(createSeries(id, i));
     }
-    return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Color(0xff1976d2),
-          //backgroundColor: Color(0xff308e1c),
-          bottom: TabBar(
-            indicatorColor: Color(0xff9962D0),
-            tabs: [
-              Tab(
-                icon: Icon(FontAwesomeIcons.solidChartBar),
-              ),
-              Tab(icon: Icon(FontAwesomeIcons.chartPie)),
-              Tab(icon: Icon(FontAwesomeIcons.chartLine)),
-            ],
-          ),
-          title: Text('Flutter Charts'),
-        ),
-      body: TabBarView(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: charts.BarChart(
-              seriesList,
-              barGroupingType: charts.BarGroupingType.grouped,
-            ),
-          ),
-          Padding(
-               padding: EdgeInsets.all(8.0),
-                child: Center(
-                  child: Text('Pie Chart'),
+    for (int i = 0; i < 90; i++) {
+      String id = 'WZG${i + 1}';
+      lineList.add(createLine(id, i));
+    }
+
+    for (int i = 0; i < 85; i++) {
+      String id = 'WZG${i + 1}';
+      pieList.add(createPie(id, i));
+    }
+
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: Color(0xff1976d2),
+            //backgroundColor: Color(0xff308e1c),
+            bottom: TabBar(
+              indicatorColor: Color(0xff9962D0),
+              tabs: [
+                Tab(
+                  icon: Icon(FontAwesomeIcons.solidChartBar),
                 ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Center(
-              child: Text('Pie Chart'),
+                Tab(icon: Icon(FontAwesomeIcons.chartPie)),
+                Tab(icon: Icon(FontAwesomeIcons.chartLine)),
+              ],
             ),
+            title: Text('Flutter Charts'),
           ),
-        ],
+        body: TabBarView(
+          children: [
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: charts.BarChart(
+                seriesList,
+                barGroupingType: charts.BarGroupingType.grouped,
+              ),
+            ),
+            Padding(
+                 padding: EdgeInsets.all(8.0),
+                  child: charts.PieChart(
+                      pieList,
+                      animate: true,
+                      animationDuration: Duration(seconds: 5),
+
+                  )
+            ),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: charts.LineChart(
+                  lineList,
+                  defaultRenderer: new charts.LineRendererConfig(
+                      includeArea: true, stacked: true),
+                  animate: true,
+                  animationDuration: Duration(seconds: 5),
+                  behaviors: [
+                    new charts.ChartTitle('Quantity',
+                        behaviorPosition: charts.BehaviorPosition.bottom,
+                        titleOutsideJustification:charts.OutsideJustification.middleDrawArea),
+                    new charts.ChartTitle('Sales',
+                        behaviorPosition: charts.BehaviorPosition.start,
+                        titleOutsideJustification: charts.OutsideJustification.middleDrawArea),
+                    new charts.ChartTitle('',
+                      behaviorPosition: charts.BehaviorPosition.end,
+                      titleOutsideJustification:charts.OutsideJustification.middleDrawArea,
+                    )
+                  ]
+              ),
+            ),
+          ],
+        ),
       ),
     );
 
@@ -157,9 +223,10 @@ class Marketing {
   String quantity;
   String discount;
   String profit;
+  Color pieColor;
 
 
-  Marketing(this.product_name, this.sales, this.quantity,this.discount,this.profit);
+  Marketing(this.product_name, this.sales, this.quantity,this.discount,this.profit,{this.pieColor});
 
 
 }

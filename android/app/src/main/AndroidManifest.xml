@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="datamellon.sales_data">
+    <uses-permission android:name="android.permission.INTERNET"/>
    <application
         android:label="sales_data"
         android:icon="@mipmap/ic_launcher">
